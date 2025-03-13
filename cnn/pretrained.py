@@ -12,7 +12,7 @@ class HandwriteParser:
     def __init__(self, model_path):
         self.__device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.__model = DigitRecognizer().to(self.__device)
-        self.__model.load_state_dict(torch.load(model_path, map_location = self.__device))
+        self.__model.load_state_dict(torch.load(model_path, map_location=self.__device))
         # 切换为评估模式
         self.__model.eval()
 
@@ -23,5 +23,5 @@ class HandwriteParser:
             output = self.__model(mnist_format)
             prob = nn.functional.log_softmax(output, dim=1)
             pred = prob.argmax(dim=1, keepdim=True)
-        
+
         return pred.item(), prob.squeeze().cpu().numpy()
