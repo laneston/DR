@@ -81,7 +81,7 @@ class CNNConv2dTrainer:
         )
 
         # 保存为图片
-        graph.render("dr_graph", format="svg", cleanup=True)
+        graph.render("CNNConv2d_graph", format="svg", cleanup=True)
 
     # 训练函数
     def train(self, cycles):
