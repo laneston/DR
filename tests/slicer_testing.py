@@ -1,7 +1,21 @@
-from cnn import process_image_to_mnist
 from pathlib import Path
 import sys
-from itertools import islice
+
+current_path = Path(__file__).resolve()
+project_parent = current_path.parent.parent  # 根据实际结构调整.parent次数
+
+
+if project_parent.exists():
+    sys.path.insert(0, str(project_parent))
+else:
+    raise FileNotFoundError(f"目标目录不存在: {project_parent}")
+
+try:
+    from modules import process_image_to_mnist
+
+except ImportError as e:
+    print(f"导入失败: {e}")
+
 
 current_dir = Path.cwd()
 target_dir = current_dir / "uploads/nums.jpg"

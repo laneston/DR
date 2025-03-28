@@ -6,10 +6,10 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torchviz import make_dot
 
-from .model import DigitRecognizer
+from .cnn import CNNConv2d
 
 
-class DigitTrainer:
+class CNNConv2dTrainer:
     def __init__(self, batch_size, mnist_path):
         if (batch_size > 0) & (batch_size < 65535) & (batch_size % 8 == 0):
             self.__batch_size = batch_size
@@ -60,7 +60,7 @@ class DigitTrainer:
         self.__device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # 初始化模型
-        self.__model = DigitRecognizer().to(self.__device)
+        self.__model = CNNConv2d().to(self.__device)
 
         # 定义损失函数和优化器
         self.__criterion = nn.CrossEntropyLoss()
@@ -90,16 +90,19 @@ class DigitTrainer:
             for batch_idx, (data, target) in enumerate(self.__train_loader):
                 data, target = data.to(self.__device), target.to(self.__device)
                 """
-                清空梯度缓存：PyTorch默认会累积梯度，若不手动清零，多次反向传播会导致梯度累加。
-                关联参数：若使用Adam或SGD等优化器，需在每次迭代前执行此操作
+                Clear gradient cache: PyTorch accumulates gradients by default. 
+                If not manually reset, multiple backpropagation will cause gradient accumulation.
+                Associated parameters: If using optimizers such as Adam or SGD, 
+                this operation must be performed before each iteration
                 """
                 self.__optimizer.zero_grad()
                 output = self.__model(data)
                 # 计算损失函数值，衡量预测值与真实值的差异，驱动模型参数更新方向
                 loss = self.__criterion(output, target)
                 """
-                反向传播：自动计算损失对模型参数的梯度。
-                底层机制：PyTorch的自动微分系统（Autograd）会构建计算图并计算梯度
+                Backpropagation: Automatically calculate the gradient of loss on model parameters.
+                Bottom level mechanism: PyTorch's Autograd system constructs 
+                computational graphs and calculates gradients
                 """
                 loss.backward()
                 # 更新模型参数：根据梯度方向和优化器规则（如Adam的动量、自适应学习率）调整参数
@@ -118,18 +121,10 @@ class DigitTrainer:
             self.__model.train()
             for batch_idx, (data, target) in enumerate(self.__train_loader):
                 data, target = data.to(self.__device), target.to(self.__device)
-                """
-                清空梯度缓存：PyTorch默认会累积梯度，若不手动清零，多次反向传播会导致梯度累加。
-                关联参数：若使用Adam或SGD等优化器，需在每次迭代前执行此操作
-                """
                 self.__optimizer.zero_grad()
                 output = self.__model(data)
                 # 计算损失函数值，衡量预测值与真实值的差异，驱动模型参数更新方向
                 loss = self.__criterion(output, target)
-                """
-                反向传播：自动计算损失对模型参数的梯度。
-                底层机制：PyTorch的自动微分系统（Autograd）会构建计算图并计算梯度
-                """
                 loss.backward()
                 # 更新模型参数：根据梯度方向和优化器规则（如Adam的动量、自适应学习率）调整参数
                 self.__optimizer.step()
@@ -165,7 +160,7 @@ class DigitTrainer:
         return self.__model.state_dict()
 
     def prediction(self, nums):
-        if (nums >= 0) & (nums < 10):
+        if (nums >= 0) & (nums < 100):
             # 示例预测（使用测试集中的第一个样本）
             sample_data, sample_label = self.test_dataset[nums]
             sample_data = sample_data.unsqueeze(0).to(self.__device)
@@ -177,5 +172,22 @@ class DigitTrainer:
             )
         else:
             raise TypeError(
-                f"{nums} is not in compliance with regulations, should be rang 0 to 9."
+                f"{nums} is not in compliance with regulations, should be rang 0 to 99."
             )
+
+
+def cnn_conv2d_pretrained(model_path, mnist_format):
+    __device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    __model = CNNConv2d().to(__device)
+    __model.load_state_dict(torch.load(model_path, map_location=__device))
+    # 切换为评估模式
+    __model.eval()
+
+    mnist_format = mnist_format.to(__device)
+    # 执行推理
+    with torch.no_grad():
+        output = __model(mnist_format)
+        prob = nn.functional.log_softmax(output, dim=1)
+        pred = prob.argmax(dim=1, keepdim=True)
+
+        return pred.item(), prob.squeeze().cpu().numpy()

@@ -1,24 +1,31 @@
-import torch
-import torchvision
-import torchvision.transforms as transforms
-from cnn import process_image_to_mnist
 from pathlib import Path
 import sys
-from itertools import islice
 import matplotlib.pyplot as plt
-from cnn import HandwriteParser
+
+
+current_path = Path(__file__).resolve()
+project_parent = current_path.parent.parent  # 根据实际结构调整.parent次数
+
+
+if project_parent.exists():
+    sys.path.insert(0, str(project_parent))
+else:
+    raise FileNotFoundError(f"目标目录不存在: {project_parent}")
+
+try:
+    from modules import process_image_to_mnist, cnn_conv2d_pretrained
+
+except ImportError as e:
+    print(f"导入失败: {e}")
+
 
 current_dir = Path.cwd()
-
-# target_dir = current_dir / "uploads/nums.jpg"
 target_dir = current_dir / "uploads/numa.jpg"
-model_dir = current_dir / "mnist_cnn.pth"
+model_dir = current_dir / "modelspath/mnist_cnn.pth"
 
 
 if __name__ == "__main__":
     print(f">>>>target_dir is {target_dir}; model_dir is {model_dir}")
-
-    handle_parser = HandwriteParser(model_dir)
 
     digit_tensors = process_image_to_mnist(target_dir)
 
@@ -42,7 +49,7 @@ if __name__ == "__main__":
             张量形状: {tensor_object.shape}; \
             像素值范围:, {tensor_object.min().item()}, {tensor_object.max().item()}"
         )
-        prediction, probabilities = handle_parser.handwrite_pretrained(tensor_object)
+        prediction, probabilities = cnn_conv2d_pretrained(model_dir, tensor_object)
 
         print(f"------>预测结果: {prediction}; 概率分布: {probabilities}")
 

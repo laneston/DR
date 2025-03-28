@@ -62,5 +62,5 @@ data
 __pycache__
 uploads
 venv
-
+modelspath
 

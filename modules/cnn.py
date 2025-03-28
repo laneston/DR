@@ -3,9 +3,9 @@ import torch.nn as nn
 
 
 # 定义神经网络模型
-class DigitRecognizer(nn.Module):
+class CNNConv2d(nn.Module):
     def __init__(self):
-        super(DigitRecognizer, self).__init__()
+        super(CNNConv2d, self).__init__()
         self.conv1 = nn.Conv2d(
             1, 32, 3, 1
         )  # 卷积层1：输入通道1（灰度图），输出通道32，3x3卷积核，步长1
