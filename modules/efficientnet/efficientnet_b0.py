@@ -8,14 +8,15 @@ from torchvision.models import efficientnet_b0
 from torchviz import make_dot
 
 
-# 修改EfficientNet模型
+# change EfficientNet model
 def efficientnet_b0_redefine():
-    model = efficientnet_b0(weights=None)
+    # model = efficientnet_b0(weights=None)
+    model = efficientnet_b0(weights="EfficientNet_B0_Weights.IMAGENET1K_V1")
 
-    # 修改第一个卷积层适应单通道输入
+    # Modify the first convolutional layer to adapt to a single channel input
     original_conv = model.features[0][0]
     model.features[0][0] = nn.Conv2d(
-        in_channels=1,  # 改为单通道
+        in_channels=1,  # Change to single channel
         out_channels=original_conv.out_channels,
         kernel_size=original_conv.kernel_size,
         stride=original_conv.stride,
@@ -23,7 +24,7 @@ def efficientnet_b0_redefine():
         bias=False,
     )
 
-    # 修改分类层
+    # Modify the classification layer
     model.classifier[1] = nn.Linear(
         in_features=model.classifier[1].in_features, out_features=10
     )
@@ -53,7 +54,7 @@ class EfficientnetB0Trainer:
                 f"{mnist_path} is not in compliance with regulations, should be string format."
             )
 
-        # 设置随机种子保证可重复性
+        # Set random seeds to ensure repeatability
         torch.manual_seed(42)
 
         # 数据预处理
@@ -70,12 +71,17 @@ class EfficientnetB0Trainer:
                 transforms.Resize((224, 224)),
                 transforms.Grayscale(num_output_channels=1),  # 显式声明单通道
                 transforms.ToTensor(),
-                # MNIST统计值，原MNIST统计值[0.1307, 0.3081]适用于28x28输入，但放大到224x224后分布改变。
-                transforms.Normalize(mean=[0.5], std=[0.5]),
+                # MNIST statistical values,
+                # the original MNIST statistical values [0.1307, 0.3081] are applicable to 28x28 inputs,
+                # but the distribution changes when enlarged to 224x224.
+                # transforms.Normalize(mean=[0.5], std=[0.5])
+                transforms.Normalize(
+                    mean=[0.485], std=[0.229]
+                ),  # 官方推荐参数[3](@ref)
             ]
         )
 
-        # 加载训练数据集
+        # Load training dataset
         self.train_dataset = torchvision.datasets.MNIST(
             root=mnist_path, train=True, download=True, transform=self.__transform
         )
@@ -84,7 +90,7 @@ class EfficientnetB0Trainer:
             self.train_dataset, batch_size=batch_size, shuffle=True
         )
 
-        # 加载测试数据集
+        # Load test dataset
         self.test_dataset = torchvision.datasets.MNIST(
             root=self.__mnist_path,
             train=False,
@@ -95,13 +101,11 @@ class EfficientnetB0Trainer:
             self.test_dataset, batch_size=self.__batch_size, shuffle=True
         )
 
-        # 检查可用设备
         self.__device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # 初始化模型
         self.__model = efficientnet_b0_redefine().to(self.__device)
 
-        # 定义损失函数和优化器
+        # Define loss function and optimizer
         self.__criterion = nn.CrossEntropyLoss()
         self.__optimizer = optim.Adam(self.__model.parameters(), lr=0.001)
         self.__scheduler = optim.lr_scheduler.ReduceLROnPlateau(
@@ -109,11 +113,11 @@ class EfficientnetB0Trainer:
         )
 
     def graph_build(self):
-        # 虚拟传入数值，生成计算图
+        # Virtual input of numerical values to generate calculation graphs
         x = torch.randn(1, 1, 224, 224, requires_grad=True)  # 关键：requires_grad=True
         x = x.to(self.__device)
 
-        # 生成计算图
+        # Generate a computational graph
         output = self.__model(x)
         graph = make_dot(
             output,
@@ -122,7 +126,7 @@ class EfficientnetB0Trainer:
             show_saved=True,
         )
 
-        # 保存为图片
+        # Save as Image
         graph.render("efficientnet_b0_create_graph", format="svg", cleanup=True)
 
     def train_beta(self, num_epochs):
@@ -166,7 +170,7 @@ class EfficientnetB0Trainer:
                 f"Test Acc: {acc:.2f}%"
             )
 
-            # 保存最佳模型
+            # Save the best model
             if acc > best_acc:
                 best_acc = acc
                 # torch.save(
@@ -182,7 +186,6 @@ class EfficientnetB0Trainer:
 
     def prediction(self, nums):
         if (nums >= 0) & (nums < 100):
-            # 示例预测（使用测试集中的第一个样本）
             sample_data, sample_label = self.test_dataset[nums]
             sample_data = sample_data.unsqueeze(0).to(self.__device)
             self.__model.eval()
