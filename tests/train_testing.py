@@ -5,9 +5,8 @@ from pathlib import Path
 
 current_path = Path(__file__).resolve()
 project_parent = (
-    # Adjust the times of .parent according to the actual structure
     current_path.parent.parent
-)
+)  # Adjust the times of .parent according to the actual structure
 
 
 if project_parent.exists():

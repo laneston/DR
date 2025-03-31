@@ -30,4 +30,4 @@ python handwrite_testing.py
 
 # 案例结果
 
-<div align="center"><img src="https://github.com/laneston/note/blob/main/00-img/Post-tensor/digital_numa15.jpg width="50%"></div>
+<div align="center"><img src="https://github.com/laneston/note/blob/main/00-img/Post-tensor/digital_numa15.jpg" width="50%"></div>
