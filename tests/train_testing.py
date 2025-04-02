@@ -35,13 +35,13 @@ and has become one of the preferred backbone networks for computer vision tasks 
 # handle_trainer = CNNConv2dTrainer(64, "./data")
 handle_trainer = EfficientnetB0Trainer(16, "./data")
 handle_trainer.graph_build()
-__optimizer, trainer_model = handle_trainer.train_beta(5)
+__t_model, __t_optimizer = handle_trainer.train_beta(5)
 
-# torch.save(trainer_model, "modelspath/mnist_efficientnet.pth")
+
 torch.save(
     {
-        "model_state_dict": trainer_model.state_dict(),
-        "optimizer_state_dict": __optimizer.state_dict(),
+        "model_state_dict": __t_model,
+        "optimizer_state_dict": __t_optimizer,
     },
     "modelspath/mnist_efficientnet.pth",
 )

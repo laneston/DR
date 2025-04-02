@@ -173,16 +173,11 @@ class EfficientnetB0Trainer:
             # Save the best model
             if acc > best_acc:
                 best_acc = acc
-                # torch.save(
-                #     {
-                #         "model_state_dict": self.__model.state_dict(),
-                #         "optimizer_state_dict": self.__optimizer.state_dict(),
-                #     },
-                #     "best_model.pth",
-                # )
-            return self.__optimizer.state_dict(), self.__model.state_dict()
+                __r_model = self.__model.state_dict()
+                __r_optimizer = self.__optimizer.state_dict()
 
         print(f"Best Test Accuracy: {best_acc:.2f}%")
+        return __r_model, __r_optimizer
 
     def prediction(self, nums):
         if (nums >= 0) & (nums < 100):
